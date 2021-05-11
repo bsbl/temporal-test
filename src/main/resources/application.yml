@@ -1,0 +1,68 @@
+spring:
+  jackson:
+    serialization:
+      indent_output: true
+      write_dates_as_timestamps: false
+      write_durations_as_timestamps: false
+
+kafka:
+  bootstrap-servers: localhost:9092
+  common:
+    client.id: seb.test.temporal
+  producer-default:
+    acks: all
+    max.in.flight.requests.per.connection: 1
+    batch.size: 51200
+    linger.ms: 10
+    compression.type: "lz4"
+    #retries: default infinite
+    key.serializer: org.apache.kafka.common.serialization.StringSerializer
+    value.serializer: org.apache.kafka.common.serialization.StringSerializer
+  consumer-default:
+    auto.offset.reset: earliest
+    group.id: seb.test.temporal
+    key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+  topics:
+    seb-test-order:
+      name: seb-test-order
+      admin:
+        nb-partitions: 10
+        nb-replicas: 1 # local cluster has only one node
+    seb-test-inbound-gw:
+      name: seb-test-inbound-gw
+      admin:
+        nb-partitions: 10
+        nb-replicas: 1 # local cluster has only one node
+    seb-test-exec-gw:
+      name: seb-test-exec-gw
+      admin:
+        nb-partitions: 4
+        nb-replicas: 1 # local cluster has only one node
+  consumers:
+    seb-test-order:
+      pattern: seb-test-order
+      props:
+        #group.id:
+        #heartbeat.interval.ms.heartbeat.interval.ms: 3000
+        #session.timeout.ms: 10000
+        auto.offset.reset: earliest
+        enable.auto.commit: false
+        #partition.assignment.strategy: org.apache.kafka.clients.consumer.RoundRobinAssignor
+        #max.poll.records:
+        #receive.buffer.bytes: higher if communication across DCs
+        #send.buffer.bytes: higher if communication across DCs
+  streams:
+    seb-test-inbound-gw:
+      pattern: seb-test-inbound-gw
+      props:
+        application.id: seb.test.temporal
+        processing.guarantee: exactly_once
+        # required locally in exactly_once mode:
+        transaction.state.log.replication.factor: 1
+        offsets.retention.minutes: 520
+        #default.deserialization.exception.handler:
+        #default.production.exception.handler:
+        default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+        default.value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+        poll.ms: 100
