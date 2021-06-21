@@ -5,7 +5,6 @@ import io.temporal.client.WorkflowClient
 import io.temporal.client.WorkflowExecutionAlreadyStarted
 import io.temporal.client.WorkflowOptions
 import seb.temporal.test.utils.logger
-import java.time.Duration
 
 
 class GroupStarter(private val workflowClient: WorkflowClient) {
@@ -18,11 +17,9 @@ class GroupStarter(private val workflowClient: WorkflowClient) {
                 WorkflowOptions.newBuilder()
                         .setCronSchedule("* * * * *") // run every minute
                         .setTaskQueue(GroupWorkflowImpl.queueName)
-                        .setWorkflowId(GroupWorkflowImpl.groupWorkflowRelease)
+                        .setWorkflowId(GroupWorkflowImpl.workflowIdGroupRelease)
                         // we want our workflow to run forever - this example would stop the cron after 3 minutes:
                         // .setWorkflowExecutionTimeout(Duration.ofMinutes(3))
-                        // stop the run after 30 seconds
-                        .setWorkflowRunTimeout(Duration.ofSeconds(30))
                         .setWorkflowIdReusePolicy(WorkflowIdReusePolicy.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE)
                         .build())
         try {
@@ -31,7 +28,7 @@ class GroupStarter(private val workflowClient: WorkflowClient) {
             log.info("Workflow started: $execution")
         }
         catch (e: WorkflowExecutionAlreadyStarted) {
-            log.info("Workflow already running: ${e.execution}")
+            log.warn("Workflow already running: ${e.execution}")
         }
     }
 

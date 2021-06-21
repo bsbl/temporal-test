@@ -2,13 +2,9 @@ package seb.temporal.test.glue
 
 import org.apache.kafka.clients.CommonClientConfigs
 import org.apache.kafka.clients.admin.Admin
-import org.apache.kafka.clients.admin.AdminClientConfig
 import org.apache.kafka.clients.admin.NewTopic
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
-import org.apache.kafka.streams.KafkaStreams
-import org.apache.kafka.streams.StreamsBuilder
-import org.apache.kafka.streams.kstream.KStream
 import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.boot.context.properties.ConstructorBinding
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -39,27 +35,47 @@ class KafkaConfiguration {
     @Bean(initMethod = "start")
     fun kafkaResourceFactory(kafkaConfig: KafkaConfig): KafkaResourceFactory = KafkaResourceFactory(kafkaConfig)
 
-    //TODO to be externalised in yaml
+    /**
+     * The name defined here are logical names pointing to
+     * the Kakfa config defined in the Yaml file
+     */
     companion object {
         /**
-         * Events published by the inbound gateway
+         * Events emitted by the inbound gateway
          */
-        val inboundTopic = "seb-test-inbound-gw"
+        val eventInboundTopic = "seb-test-inbound"
 
         /**
-         * Event published by the order workflow
+         * Event emitted by the order workflow
          */
-        val orderTopic = "seb-test-order"
+        val eventOrderTopic = "seb-test-order"
 
         /**
-         * Event published to the execution gateway
+         * Event emitted by the group workflow
+         */
+        val eventGroupTopic = "seb-test-group"
+
+        /**
+         * Event emitted by the execution workflow
+         */
+        val eventExecutionTopic = "seb-test-exec"
+
+
+
+        /**
+         * Message sent to the external execution system.
+         * The external execution system is based on messaging
+         * simulated here through Kafka topic but can be
+         * anything like swift protocol, mq etc..
+         */
+        val executionExternalTopic = "seb-test-exec-ext"
+
+        /**
+         * Message coming from the external execution system
+         * which publishes message toward the execution gateway
          */
         val executionGwTopic = "seb-test-exec-gw"
 
-        /**
-         * Event published by the execution workflow
-         */
-        val executionTopic= "seb-test-exec"
     }
 }
 

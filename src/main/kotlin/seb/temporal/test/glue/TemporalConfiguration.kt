@@ -4,15 +4,17 @@ import io.temporal.client.WorkflowClient
 import io.temporal.serviceclient.WorkflowServiceStubs
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import seb.temporal.test.flows.exec.ExecutionActivity
+import seb.temporal.test.flows.exec.ExecutionActivityImpl
+import seb.temporal.test.flows.exec.ExecutionWorker
 import seb.temporal.test.flows.group.GroupActivity
 import seb.temporal.test.flows.group.GroupActivityImpl
 import seb.temporal.test.flows.group.GroupStarter
 import seb.temporal.test.flows.group.GroupWorker
-import seb.temporal.test.inbound.OrderInitiator
-import seb.temporal.test.inbound.OrderInitiatorImpl
 import seb.temporal.test.flows.order.OrderActivity
 import seb.temporal.test.flows.order.OrderActivityImpl
 import seb.temporal.test.flows.order.OrderWorker
+import seb.temporal.test.services.ExecutionService
 import seb.temporal.test.store.OrderStore
 
 @Configuration
@@ -29,24 +31,21 @@ class TemporalConfiguration {
     //////////////////////////// ORDER FLOW ////////////////////////////
 
     @Bean
-    fun orderActivities(orderStore: OrderStore, kafkaResourceFactory: KafkaResourceFactory) =
-            OrderActivityImpl(orderStore, kafkaResourceFactory)
+    fun orderActivities(orderStore: OrderStore, kafkaResourceFactory: KafkaResourceFactory,
+                        workflowClient: WorkflowClient) =
+            OrderActivityImpl(orderStore, kafkaResourceFactory, workflowClient)
 
     @Bean(initMethod = "start")
     fun orderWorker(orderActivity: OrderActivity, orderWorkflowClient: WorkflowClient): OrderWorker =
             OrderWorker(orderActivity, orderWorkflowClient)
 
-    @Bean(initMethod = "start")
-    fun orderInitiator(orderWorkflowClient: WorkflowClient,
-                       kafkaResourceFactory: KafkaResourceFactory): OrderInitiator =
-            OrderInitiatorImpl(orderWorkflowClient, kafkaResourceFactory)
-
 
     //////////////////////////// GROUP FLOW ////////////////////////////
 
     @Bean
-    fun groupActivities(orderStore: OrderStore, kafkaResourceFactory: KafkaResourceFactory): GroupActivity =
-            GroupActivityImpl(orderStore, kafkaResourceFactory)
+    fun groupActivities(orderStore: OrderStore, kafkaResourceFactory: KafkaResourceFactory, executionService: ExecutionService,
+                        workflowClient: WorkflowClient): GroupActivity =
+            GroupActivityImpl(orderStore, kafkaResourceFactory, executionService, workflowClient)
 
     @Bean(initMethod = "start")
     fun groupWorker(groupActivity: GroupActivity, workflowClient: WorkflowClient): GroupWorker =
@@ -59,6 +58,13 @@ class TemporalConfiguration {
 
     //////////////////////////// EXEC FLOW ////////////////////////////
 
+    @Bean
+    fun executionActivities(workflowClient: WorkflowClient): ExecutionActivity =
+            ExecutionActivityImpl(workflowClient)
+
+    @Bean(initMethod = "start")
+    fun executionWorker(executionActivity: ExecutionActivity, workflowClient: WorkflowClient): ExecutionWorker =
+            ExecutionWorker(executionActivity, workflowClient)
 
 }
 

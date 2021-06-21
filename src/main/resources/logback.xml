@@ -1,0 +1,17 @@
+<configuration>
+
+    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>
+                %date{ISO8601} %highlight(%-5level) %cyan(%-40(%logger{38})) %msg%n
+            </Pattern>
+        </layout>
+    </appender>
+
+    <logger name="seb.temporal.test" level="debug" />
+
+    <root level="info">
+        <appender-ref ref="stdout"/>
+    </root>
+
+</configuration>

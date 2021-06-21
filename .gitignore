@@ -34,3 +34,5 @@ build/
 # Seb's specifics
 *.log
 *.jar
+
+.DS_Store

@@ -5,10 +5,28 @@ spring:
       write_dates_as_timestamps: false
       write_durations_as_timestamps: false
 
+# Each component can be configured to crash with a probability
+# 0: p=0 means never crashes
+# 1: p=1 always crashes
+# x > 1: crashes with p=1/x
+chaos:
+  execution:
+    probability: 4
+  allocation:
+    probability: 0
+  booking:
+    probability: 10
+
+# Kafka config - this is used to create the topics on the fly
+# and to configure consumers, producers and KStreams
 kafka:
+  # seeds
   bootstrap-servers: localhost:9092
+  # props common to consumers, producers and KStreams
   common:
     client.id: seb.test.temporal
+  # Default Kafka producer props injected into the KafkaProducer instances
+  # Those props override common props
   producer-default:
     acks: all
     max.in.flight.requests.per.connection: 1
@@ -18,30 +36,51 @@ kafka:
     #retries: default infinite
     key.serializer: org.apache.kafka.common.serialization.StringSerializer
     value.serializer: org.apache.kafka.common.serialization.StringSerializer
+  # Default Kafka consumer props injected into the KafkaConsumer instances
+  # Those props override common props
   consumer-default:
     auto.offset.reset: earliest
     group.id: seb.test.temporal
     key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
     value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
   topics:
+    # logical-name: name referenced from code
     seb-test-order:
+      # name: real name of the topic in the environment
       name: seb-test-order
+      # means that the topic is configured on the fly by the app (recommended for dev only)
+      admin:
+        # nb-partition: number of partitions to configure for the topic
+        nb-partitions: 10
+        # nb-replicas: number of replicas to configure for the topic
+        nb-replicas: 1 # local cluster has only one node
+    seb-test-inbound:
+      name: seb-test-inbound
       admin:
         nb-partitions: 10
-        nb-replicas: 1 # local cluster has only one node
-    seb-test-inbound-gw:
-      name: seb-test-inbound-gw
+        nb-replicas: 1
+    seb-test-group:
+      name: seb-test-group
       admin:
-        nb-partitions: 10
-        nb-replicas: 1 # local cluster has only one node
+        nb-partitions: 4
+        nb-replicas: 1
+    seb-test-exec-ext:
+      name: seb-test-exec-ext
+      admin:
+        nb-partitions: 4
+        nb-replicas: 1
     seb-test-exec-gw:
       name: seb-test-exec-gw
       admin:
-        nb-partitions: 4
-        nb-replicas: 1 # local cluster has only one node
+        nb-partitions: 10
+        nb-replicas: 1
   consumers:
+    # logical-name: name referenced from code. Similar to the admin section (see kafka.topics)
     seb-test-order:
+      # pattern: real topic name or regular expression used to subscribe to Kafka topics
       pattern: seb-test-order
+      # Consumer specific props which override common and default props
+      # defined previously
       props:
         #group.id:
         #heartbeat.interval.ms.heartbeat.interval.ms: 3000
@@ -53,8 +92,26 @@ kafka:
         #receive.buffer.bytes: higher if communication across DCs
         #send.buffer.bytes: higher if communication across DCs
   streams:
-    seb-test-inbound-gw:
-      pattern: seb-test-inbound-gw
+    # logical-name: name referenced from code. Similar to the admin section (see kafka.topics)
+    seb-test-inbound:
+      # pattern: real topic name or regular expression used to subscribe to Kafka topics
+      pattern: seb-test-inbound
+      # Consumer specific props which override common props
+      props:
+        application.id: seb.test.temporal
+        processing.guarantee: exactly_once
+        # required locally in exactly_once mode:
+        transaction.state.log.replication.factor: 1
+        offsets.retention.minutes: 520
+        #default.deserialization.exception.handler:
+        #default.production.exception.handler:
+        default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+        default.value.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
+        poll.ms: 100
+    seb-test-exec-gw:
+      # pattern: real topic name or regular expression used to subscribe to Kafka topics
+      pattern: seb-test-exec-gw
+      # Consumer specific props which override common props
       props:
         application.id: seb.test.temporal
         processing.guarantee: exactly_once

@@ -9,7 +9,9 @@ import seb.temporal.test.store.OrderStoreInMemory
 class StoreConfiguration {
 
     /**
-     * Use in-memory store as of now
+     * In-memory store for the sake of demo - this of
+     * course cannot be used if multiple workers are
+     * started.
      */
     @Bean
     fun orderStore(): OrderStore = OrderStoreInMemory()
